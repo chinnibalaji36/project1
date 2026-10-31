@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Intelligence — Fake Review Detector</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">RI</span>
+      <span>Review Intelligence</span>
+    </div>
+    <nav class="top-nav">
+      <a href="{{ url_for('index') }}" class="active">Analyze</a>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-eyebrow">Fake Review Detection</div>
+    <h1>Check a review before you trust it</h1>
+    <p>Paste a review, or a Flipkart product link, and get an ML-backed
+    verdict with sentiment, similarity, and risk analysis in seconds.</p>
+  </section>
+
+  {% if not model_ready %}
+  <div class="error-box">
+    Model not found. Run <strong>python train_model.py</strong> in the project folder,
+    then restart the app.
+  </div>
+  {% endif %}
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="manual">Manual Review</button>
+    <button class="tab-btn" data-tab="flipkart">Flipkart Product</button>
+  </div>
+
+  <section class="panel" id="panel-manual">
+    <label class="field-label" for="review-input">Review text</label>
+    <textarea id="review-input" rows="6" maxlength="5000"
+      placeholder="e.g. Amazing product best quality highly recommended must buy now!"></textarea>
+    <div class="char-count"><span id="char-count">0</span> / 5000</div>
+    <button class="primary" id="analyze-btn" {% if not model_ready %}disabled{% endif %}>Analyze Review</button>
+    <div id="manual-error"></div>
+    <div id="manual-result"></div>
+  </section>
+
+  <section class="panel" id="panel-flipkart" hidden>
+    <label class="field-label" for="flipkart-url">Flipkart product URL</label>
+    <input type="url" id="flipkart-url" placeholder="https://www.flipkart.com/...">
+    <button class="primary" id="fetch-btn" {% if not model_ready %}disabled{% endif %}>Fetch &amp; Analyze</button>
+    <p class="hint">Automatic fetching requires a configured review-data provider
+      (FLIPKART_API_KEY / FLIPKART_API_HOST / FLIPKART_API_URL in .env).
+      If it isn't configured, use the Manual Review tab instead.</p>
+    <div id="flipkart-error"></div>
+    <div id="flipkart-result"></div>
+  </section>
+
+  <p class="disclaimer">
+    This tool is a decision-support system, not a perfect fraud detector.
+    Predictions are probabilistic and should be combined with human judgment.
+  </p>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

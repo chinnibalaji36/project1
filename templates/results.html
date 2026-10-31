@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analysis Result — Review Intelligence</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">RI</span>
+      <span>Review Intelligence</span>
+    </div>
+    <nav class="top-nav">
+      <a href="{{ url_for('index') }}">Analyze</a>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-eyebrow">Analysis Result</div>
+    <h1>Verdict Report</h1>
+  </section>
+
+  {% if result %}
+  <div class="exhibit risk-{{ result.risk_level|lower }}">
+    <div class="exhibit-label">Submitted Review</div>
+    <div class="exhibit-review">&ldquo;{{ result.review }}&rdquo;</div>
+
+    <span class="stamp {{ 'genuine' if result.prediction == 'Genuine' else 'fake' }}">
+      {{ result.prediction }}
+    </span>
+
+    <div class="evidence-grid">
+      <div class="evidence-item">
+        <div class="k">Confidence</div>
+        <div class="v">{{ (result.confidence * 100) | round(0, 'common') | int }}%</div>
+      </div>
+      <div class="evidence-item">
+        <div class="k">Sentiment</div>
+        <div class="v">{{ result.sentiment }}</div>
+      </div>
+      <div class="evidence-item">
+        <div class="k">Similarity</div>
+        <div class="v">{{ (result.similarity_score * 100) | round(0, 'common') | int }}%</div>
+      </div>
+      <div class="evidence-item">
+        <div class="k">Risk Score</div>
+        <div class="v">{{ result.risk_score }}/100</div>
+      </div>
+    </div>
+
+    <div class="risk-bar-track">
+      <div class="risk-bar-fill" style="width: {{ result.risk_score }}%;"></div>
+    </div>
+    <span class="badge {{ result.risk_level|lower }}">{{ result.risk_level }} RISK</span>
+
+    {% if result.suspicious_keywords %}
+    <div class="keywords">
+      {% for kw in result.suspicious_keywords %}
+        <span class="keyword-chip">{{ kw }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <ul class="reasons">
+      {% for reason in result.reasons %}
+        <li>{{ reason }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <p>No result to display. <a href="{{ url_for('index') }}">Go back and analyze a review.</a></p>
+  {% endif %}
+
+</div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Review Intelligence</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">RI</span>
+      <span>Review Intelligence</span>
+    </div>
+    <nav class="top-nav">
+      <a href="{{ url_for('index') }}">Analyze</a>
+      <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-eyebrow">Overview</div>
+    <h1>Dashboard</h1>
+    <p>A running summary of every review this system has analyzed so far.</p>
+  </section>
+
+  <div class="summary-strip">
+    <div class="summary-cell">
+      <div class="num">{{ stats.total_reviews }}</div>
+      <div class="label">Total Analyzed</div>
+    </div>
+    <div class="summary-cell">
+      <div class="num">{{ stats.fake_reviews }}</div>
+      <div class="label">Fake</div>
+    </div>
+    <div class="summary-cell">
+      <div class="num">{{ stats.genuine_reviews }}</div>
+      <div class="label">Genuine</div>
+    </div>
+    <div class="summary-cell">
+      <div class="num">{{ stats.average_risk_score }}</div>
+      <div class="label">Avg Risk Score</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Fake vs Genuine</h3>
+      <canvas id="fakeGenuineChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Sentiment Distribution</h3>
+      <canvas id="sentimentChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Risk Levels</h3>
+      <canvas id="riskChart"></canvas>
+    </div>
+  </div>
+
+  <section class="section-card">
+    <div class="exhibit-label" style="margin-bottom: 14px;">Recently Analyzed</div>
+    {% if recent %}
+    <table class="review-table">
+      <thead>
+        <tr>
+          <th>Review</th>
+          <th>Source</th>
+          <th>Prediction</th>
+          <th>Confidence</th>
+          <th>Sentiment</th>
+          <th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recent %}
+        <tr>
+          <td>{{ r.review_text[:80] }}{% if r.review_text|length > 80 %}&hellip;{% endif %}</td>
+          <td>{{ r.source }}</td>
+          <td>{{ r.prediction }}</td>
+          <td>{{ (r.confidence * 100) | round(0, 'common') | int if r.confidence is not none else '—' }}%</td>
+          <td>{{ r.sentiment }}</td>
+          <td><span class="badge {{ r.risk_level|lower if r.risk_level else 'low' }}">{{ r.risk_level or '—' }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="hint">No reviews analyzed yet. Head to the Analyze page to submit one.</p>
+    {% endif %}
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+  const stats = {{ stats | tojson }};
+
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = "#475467";
+  Chart.defaults.borderColor = "#E4E7EC";
+
+  new Chart(document.getElementById('fakeGenuineChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Genuine', 'Fake'],
+      datasets: [{
+        data: [stats.genuine_reviews, stats.fake_reviews],
+        backgroundColor: ['#16A34A', '#DC2626'],
+        borderWidth: 0,
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+  });
+
+  const sentimentLabels = Object.keys(stats.sentiment_breakdown || {});
+  const sentimentValues = Object.values(stats.sentiment_breakdown || {});
+  new Chart(document.getElementById('sentimentChart'), {
+    type: 'bar',
+    data: {
+      labels: sentimentLabels.length ? sentimentLabels : ['No data'],
+      datasets: [{
+        data: sentimentValues.length ? sentimentValues : [0],
+        backgroundColor: '#4F46E5',
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+
+  const riskLabels = Object.keys(stats.risk_breakdown || {});
+  const riskValues = Object.values(stats.risk_breakdown || {});
+  const riskColors = { LOW: '#16A34A', MEDIUM: '#D97706', HIGH: '#DC2626' };
+  new Chart(document.getElementById('riskChart'), {
+    type: 'pie',
+    data: {
+      labels: riskLabels.length ? riskLabels : ['No data'],
+      datasets: [{
+        data: riskValues.length ? riskValues : [1],
+        backgroundColor: riskLabels.map(l => riskColors[l] || '#D0D5DD'),
+        borderWidth: 0,
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+</script>
+</body>
+</html>
